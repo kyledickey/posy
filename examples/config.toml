@@ -1,0 +1,58 @@
+# posy config. Lives at ~/.config/posy/config.toml (`posy init` writes this file).
+# Everything here is optional.
+
+# Who the bouquet is for, and who it's from. Used as {name} and {from} in messages.
+name = "love"
+from = "me"
+
+# Messages under the bouquet. With more than one, posy rotates through them.
+messages = [
+  "for you ♥",
+  "hi {name} ♥",
+  "you make everything bloom",
+]
+message_interval = 8.0   # seconds per message
+
+# Which bouquet to open with: a preset, a saved bouquet's name, a path to a
+# .toml file, "daily" or "random". Leave it out to get the daily bouquet
+# (a new one every day).
+# bouquet = "roses"
+
+# color = "auto"          # "auto", "truecolor" or "256"
+# background = "#1a1b26"  # paint the whole terminal background
+# How it is drawn: "ascii" (letters and symbols), "blocks" (little coloured
+# squares; any terminal with full colour) or "fine" (smaller squares; needs a
+# recent terminal like Ghostty or Kitty). Leave it out and posy picks.
+# style = "fine"
+# fps = 60               # frames per second (30 over ssh unless you set it)
+spin_speed = 0.25         # how fast it turns; 0 keeps it still
+# buttons = false        # hide the buttons along the bottom (h shows them)
+# update_check = false   # don't look for newer versions of posy
+grow = true               # play the growing + blooming animation at start
+# export_dir = "~/Pictures/posy"
+
+# Special days: "MM-DD" repeats every year, "YYYY-MM-DD" happens once.
+# {years} counts up from `since`.
+[[dates]]
+date = "02-14"
+message = "happy valentine's day, {name} ♥"
+bouquet = "roses"
+effects = ["hearts"]
+
+[[dates]]
+date = "06-01"
+since = 2023
+message = "happy {years} years ♥"
+bouquet = "blush"
+effects = ["hearts", "sparkles"]
+
+# Secret words: press / in posy, type one, and hit enter.
+[[secrets]]
+word = "sunshine"
+message = "you're my sunshine ☺"
+bouquet = "sunset"
+
+[[secrets]]
+word = "xoxo"
+message = "xoxo ♥"
+burst = true
