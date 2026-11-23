@@ -56,12 +56,15 @@ jobs:
             runner: namespace-profile-nvmbr-lg
           - target: armv7-unknown-linux-musleabihf
             runner: namespace-profile-nvmbr-lg
-          # Mac programs have to be built on a Mac.
+          # Mac programs have to be built on a Mac. The Intel one is
+          # cross-built on the same Apple Silicon machine.
           - target: aarch64-apple-darwin
-            runner: macos-latest
+            runner: namespace-profile-nvmbr-mac
           - target: x86_64-apple-darwin
-            runner: macos-latest
+            runner: namespace-profile-nvmbr-mac
           # Windows ones are built on Windows; the ARM one is cross-built.
+          # These are GitHub's own machines: Namespace has none for Windows
+          # on this plan.
           - target: x86_64-pc-windows-msvc
             runner: windows-latest
           - target: aarch64-pc-windows-msvc
