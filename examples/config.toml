@@ -1,4 +1,6 @@
-# posy config. Lives at ~/.config/posy/config.toml (`posy init` writes this file).
+# posy config. `posy init` writes this file and tells you where it went:
+# ~/.config/posy/config.toml on Linux, ~/Library/Application Support/posy/
+# on a Mac, %APPDATA%\posy\ on Windows.
 # Everything here is optional.
 
 # Who the bouquet is for, and who it's from. Used as {name} and {from} in messages.

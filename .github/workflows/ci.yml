@@ -41,8 +41,16 @@ jobs:
       - run: cargo clippy --all-targets --locked -- -D warnings
 
   test:
-    name: Test
-    runs-on: namespace-profile-nvmbr-md
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux
+            runner: namespace-profile-nvmbr-md
+          - os: windows
+            runner: windows-latest
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
@@ -52,8 +60,19 @@ jobs:
   # Builds the real program and makes it draw: every preset, in every
   # style. Catches the kind of break that unit tests can't see.
   smoke:
-    name: Draw every bouquet
-    runs-on: namespace-profile-nvmbr-md
+    name: Draw every bouquet (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux
+            runner: namespace-profile-nvmbr-md
+          - os: windows
+            runner: windows-latest
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
@@ -63,6 +82,7 @@ jobs:
         run: |
           set -eu
           posy=target/release/posy
+          [ "${{ matrix.os }}" != windows ] || posy=target/release/posy.exe
           export XDG_CONFIG_HOME="$RUNNER_TEMP/config"
           "$posy" --version
           "$posy" list
@@ -79,7 +99,7 @@ jobs:
           "$posy" bench --size 170x58
       - uses: actions/upload-artifact@v4
         with:
-          name: bouquets
+          name: bouquets-${{ matrix.os }}
           path: shots
           retention-days: 7
 
@@ -93,3 +113,16 @@ jobs:
           sh -n install.sh
           command -v shellcheck >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck; }
           shellcheck install.sh
+
+  windows-script:
+    name: Install script (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check install.ps1 parses in both PowerShells
+        run: |
+          $check = '$errors = $null; [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path install.ps1), [ref]$null, [ref]$errors) | Out-Null; if ($errors) { $errors | Format-List; exit 1 }'
+          pwsh -NoProfile -Command $check
+          if ($LASTEXITCODE) { exit 1 }
+          powershell -NoProfile -Command $check
+          if ($LASTEXITCODE) { exit 1 }

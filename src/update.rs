@@ -2,7 +2,8 @@
 //!
 //! Releases live on GitHub as one archive per kind of computer. Rather
 //! than build networking into posy, this borrows `curl` and `tar`, which
-//! every Mac and Linux machine already has.
+//! every Mac and Linux machine already has, and Windows has too since
+//! Windows 10.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -12,7 +13,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result, bail};
 
-use crate::config;
+use crate::{config, sha256};
 
 pub const REPO: &str = "kyledickey/posy";
 const CURRENT: &str = env!("CARGO_PKG_VERSION");
@@ -27,11 +28,26 @@ fn target() -> Option<&'static str> {
     match (std::env::consts::OS, std::env::consts::ARCH) {
         ("linux", "x86_64") => Some("x86_64-unknown-linux-musl"),
         ("linux", "aarch64") => Some("aarch64-unknown-linux-musl"),
+        ("linux", "arm") => Some("armv7-unknown-linux-musleabihf"),
         ("macos", "x86_64") => Some("x86_64-apple-darwin"),
         ("macos", "aarch64") => Some("aarch64-apple-darwin"),
+        ("windows", "x86_64") => Some("x86_64-pc-windows-msvc"),
+        ("windows", "aarch64") => Some("aarch64-pc-windows-msvc"),
         _ => None,
     }
 }
+
+/// The release file for a target: a zip on Windows, a tarball elsewhere.
+fn archive_name(target: &str) -> String {
+    if target.contains("windows") {
+        format!("posy-{target}.zip")
+    } else {
+        format!("posy-{target}.tar.gz")
+    }
+}
+
+/// Where curl can throw away what it downloads.
+const NOWHERE: &str = if cfg!(windows) { "NUL" } else { "/dev/null" };
 
 /// "1.2.3" (or "v1.2.3") as numbers, so versions compare properly.
 fn parse(version: &str) -> Option<(u32, u32, u32)> {
@@ -60,7 +76,7 @@ fn curl(args: &[&str]) -> Command {
 fn latest_version(timeout_secs: u32) -> Result<String> {
     let url = format!("https://github.com/{REPO}/releases/latest");
     let timeout = timeout_secs.to_string();
-    let out = curl(&["--max-time", &timeout, "--output", "/dev/null"])
+    let out = curl(&["--max-time", &timeout, "--output", NOWHERE])
         .args(["--write-out", "%{url_effective}", &url])
         .stderr(Stdio::null())
         .output()
@@ -115,22 +131,6 @@ fn download(version: &str, name: &str, dir: &Path) -> Result<PathBuf> {
     bail!("couldn't download {name} from {url}")
 }
 
-/// The SHA-256 of a file, from whichever tool this machine has.
-fn sha256(path: &Path) -> Result<String> {
-    for (tool, args) in [("sha256sum", &[][..]), ("shasum", &["-a", "256"][..])] {
-        let out = Command::new(tool).args(args).arg(path).output();
-        if let Ok(out) = out
-            && out.status.success()
-            && let Some(sum) = String::from_utf8_lossy(&out.stdout)
-                .split_whitespace()
-                .next()
-        {
-            return Ok(sum.to_lowercase());
-        }
-    }
-    bail!("couldn't find sha256sum or shasum to check the download")
-}
-
 /// `posy update`: looks for a newer version and, unless only checking,
 /// replaces this program with it.
 pub fn run(check_only: bool) -> Result<()> {
@@ -165,7 +165,7 @@ pub fn run(check_only: bool) -> Result<()> {
 }
 
 fn install(version: &str, target: &str, dir: &Path, exe: &Path, folder: &Path) -> Result<()> {
-    let archive_name = format!("posy-{target}.tar.gz");
+    let archive_name = archive_name(target);
     let archive = download(version, &archive_name, dir)?;
     let sums = fs::read_to_string(download(version, "checksums.txt", dir)?)?;
     let expected = sums
@@ -174,18 +174,19 @@ fn install(version: &str, target: &str, dir: &Path, exe: &Path, folder: &Path) -
         .find(|(_, name)| name.trim().trim_start_matches('*') == archive_name)
         .map(|(sum, _)| sum.to_lowercase())
         .context("the release has no checksum for this download")?;
-    if sha256(&archive)? != expected {
+    if sha256::hex(&fs::read(&archive)?) != expected {
         bail!("the download doesn't match its checksum; nothing was changed");
     }
 
+    // Windows' own tar reads zips as well as tarballs.
     let unpacked = Command::new("tar")
-        .arg("-xzf")
+        .arg("-xf")
         .arg(&archive)
         .arg("-C")
         .arg(dir)
         .status()
         .context("couldn't run tar")?;
-    let fresh = dir.join("posy");
+    let fresh = dir.join(format!("posy{}", std::env::consts::EXE_SUFFIX));
     if !unpacked.success() || !fresh.is_file() {
         bail!("couldn't unpack the download");
     }
@@ -206,6 +207,20 @@ fn install(version: &str, target: &str, dir: &Path, exe: &Path, folder: &Path) -
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&staged, fs::Permissions::from_mode(0o755))?;
     }
+    // Windows won't let a running program be replaced, but it will let
+    // it be renamed: move this one aside first. The old copy is still
+    // running, so it can only be tidied away by the next update.
+    #[cfg(windows)]
+    {
+        let old = folder.join(".posy-old.exe");
+        let _ = fs::remove_file(&old);
+        fs::rename(exe, &old).with_context(|| format!("couldn't move {} aside", exe.display()))?;
+        if let Err(err) = fs::rename(&staged, exe) {
+            let _ = fs::rename(&old, exe);
+            return Err(err).with_context(|| format!("couldn't replace {}", exe.display()));
+        }
+    }
+    #[cfg(not(windows))]
     fs::rename(&staged, exe).with_context(|| format!("couldn't replace {}", exe.display()))?;
     Ok(())
 }

@@ -1,5 +1,7 @@
-//! The config file (`~/.config/posy/config.toml`): who it's for, messages,
-//! special dates and secret words.
+//! The config file: who it's for, messages, special dates and secret
+//! words. It is `config.toml` in posy's folder, which is `~/.config/posy`
+//! on Linux, `~/Library/Application Support/posy` on a Mac and
+//! `%APPDATA%\posy` on Windows.
 
 use std::fs;
 use std::path::{Path, PathBuf};

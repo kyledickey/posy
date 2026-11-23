@@ -25,6 +25,7 @@ mod raster;
 mod render;
 mod rng;
 mod scene;
+mod sha256;
 mod update;
 
 use anyhow::Result;
@@ -34,6 +35,9 @@ use crate::cli::{Cli, Command};
 use crate::config::Config;
 
 fn main() -> Result<()> {
+    // Windows consoles only understand colour codes once asked to.
+    #[cfg(windows)]
+    crossterm::ansi_support::supports_ansi();
     let cli = Cli::parse();
     let config = Config::load(cli.config.as_deref())?;
 
