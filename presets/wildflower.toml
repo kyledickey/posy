@@ -1,0 +1,32 @@
+# Picked on a walk: daisies, cosmos and lavender in a basket.
+name = "wildflower"
+message = "you make everything bloom"
+wrap = "basket"
+ribbon_color = "sage"
+effects = ["fireflies", "petals"]
+
+[[flowers]]
+kind = "daisy"
+count = 3
+color = "white"
+
+[[flowers]]
+kind = "cosmos"
+count = 2
+color = "pink"
+
+[[flowers]]
+kind = "cosmos"
+color = "purple"
+
+[[flowers]]
+kind = "sunflower"
+color = "yellow"
+
+[[flowers]]
+kind = "lavender"
+count = 3
+
+[[flowers]]
+kind = "babys-breath"
+count = 2
