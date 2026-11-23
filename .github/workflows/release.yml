@@ -1,0 +1,137 @@
+name: Release
+
+# Push a tag like v0.2.0 to publish a release. Running it by hand builds
+# everything without publishing, to check a release would work.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  # The tag, Cargo.toml and the tests have to agree before anything is built.
+  check:
+    name: Check
+    runs-on: namespace-profile-nvmbr-md
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Version
+        id: version
+        run: |
+          set -eu
+          version="$(grep -m1 '^version' Cargo.toml | cut -d '"' -f 2)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::tag $GITHUB_REF_NAME doesn't match Cargo.toml, which says $version"
+            exit 1
+          fi
+      - run: cargo fmt --all --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --locked
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux builds carry everything they need, so one file runs on
+          # any distribution. Both are made on the same x86 machine.
+          - target: x86_64-unknown-linux-musl
+            runner: namespace-profile-nvmbr-lg
+          - target: aarch64-unknown-linux-musl
+            runner: namespace-profile-nvmbr-lg
+          # Mac programs have to be built on a Mac.
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Build
+        run: |
+          set -eu
+          case "${{ matrix.target }}" in
+            *-linux-musl)
+              # Rust's own linker can link these without a cross toolchain.
+              var="CARGO_TARGET_$(echo "${{ matrix.target }}" | tr 'a-z-' 'A-Z_')_LINKER"
+              export "$var=rust-lld"
+              ;;
+          esac
+          cargo build --release --locked --target "${{ matrix.target }}"
+      - name: Try it
+        if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.target == 'aarch64-apple-darwin'
+        run: |
+          set -eu
+          posy="target/${{ matrix.target }}/release/posy"
+          "$posy" --version
+          "$posy" -b roses --style fine --color truecolor snapshot "$RUNNER_TEMP/roses.html"
+      - name: Package
+        run: |
+          set -eu
+          mkdir -p dist package
+          cp "target/${{ matrix.target }}/release/posy" README.md package/
+          tar -czf "dist/posy-${{ matrix.target }}.tar.gz" -C package posy README.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: posy-${{ matrix.target }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: [check, build]
+    runs-on: namespace-profile-nvmbr-sm
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          set -eu
+          cd dist
+          sha256sum posy-*.tar.gz > checksums.txt
+          cat checksums.txt
+      - name: Install from these files
+        run: |
+          set -eu
+          # Run the real install script against the files about to be
+          # published, before anyone can download a broken release.
+          POSY_DOWNLOAD_URL="file://$PWD/dist" POSY_INSTALL_DIR="$RUNNER_TEMP/bin" sh install.sh
+          "$RUNNER_TEMP/bin/posy" --version | grep -F "${{ needs.check.outputs.version }}"
+      - name: Publish
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/posy-*.tar.gz dist/checksums.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "posy ${{ needs.check.outputs.version }}" \
+            --generate-notes
+      - name: Dry run
+        if: github.ref_type != 'tag'
+        run: echo "Built posy ${{ needs.check.outputs.version }} for every target. Push a tag to publish it."

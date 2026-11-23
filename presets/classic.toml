@@ -1,0 +1,47 @@
+# The original mix: a bit of everything in a paper cone.
+name = "classic"
+message = "for you ♥"
+wrap = "cone"
+wrap_color = "cream"
+ribbon_color = "pink"
+effects = ["hearts", "sparkles"]
+
+[[flowers]]
+kind = "daisy"
+count = 2
+color = "white"
+
+[[flowers]]
+kind = "cosmos"
+count = 2
+color = "pink"
+
+[[flowers]]
+kind = "rose"
+color = "red"
+
+[[flowers]]
+kind = "cosmos"
+color = "purple"
+
+[[flowers]]
+kind = "daisy"
+color = "yellow"
+center = "chocolate"
+
+[[flowers]]
+kind = "cosmos"
+color = "orange"
+center = "chocolate"
+
+[[flowers]]
+kind = "tulip"
+color = "red"
+
+[[flowers]]
+kind = "tulip"
+color = "pink"
+
+[[flowers]]
+kind = "babys-breath"
+count = 3

@@ -1,0 +1,27 @@
+# Warm golden-hour colors in a mason jar.
+name = "sunset"
+message = "hi sunshine"
+wrap = "jar"
+ribbon_color = "kraft"
+effects = ["fireflies", "sparkles"]
+
+[[flowers]]
+kind = "sunflower"
+count = 3
+color = "yellow"
+
+[[flowers]]
+kind = "cosmos"
+count = 2
+color = "orange"
+
+[[flowers]]
+kind = "lily"
+count = 2
+color = "coral"
+center = "burgundy"
+
+[[flowers]]
+kind = "rose"
+count = 2
+color = "apricot"

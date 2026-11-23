@@ -1,0 +1,32 @@
+# Moonlit whites and purples under the stars.
+name = "midnight"
+message = "goodnight love"
+wrap = "cone"
+wrap_color = "plum"
+ribbon_color = "silver"
+effects = ["stars", "fireflies"]
+
+[[flowers]]
+kind = "lily"
+count = 3
+color = "white"
+
+[[flowers]]
+kind = "peony"
+count = 2
+color = "lilac"
+
+[[flowers]]
+kind = "cosmos"
+count = 2
+color = "violet"
+
+[[flowers]]
+kind = "lavender"
+count = 3
+color = "purple"
+
+[[flowers]]
+kind = "babys-breath"
+count = 3
+color = "silver"

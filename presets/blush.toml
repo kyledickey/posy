@@ -1,0 +1,26 @@
+# Soft pinks: peonies, carnations and roses.
+name = "blush"
+message = "thinking of you"
+wrap = "cone"
+wrap_color = "white"
+ribbon_color = "blush"
+effects = ["petals", "hearts"]
+
+[[flowers]]
+kind = "peony"
+count = 3
+color = "blush"
+
+[[flowers]]
+kind = "carnation"
+count = 2
+color = "pink"
+
+[[flowers]]
+kind = "rose"
+count = 2
+color = "pink"
+
+[[flowers]]
+kind = "babys-breath"
+count = 3

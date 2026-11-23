@@ -1,0 +1,21 @@
+# A dozen-ish red roses. The obvious choice for a reason.
+name = "roses"
+message = "i love you ♥"
+wrap = "cone"
+wrap_color = "blush"
+ribbon_color = "red"
+effects = ["hearts", "sparkles"]
+
+[[flowers]]
+kind = "rose"
+count = 9
+color = "red"
+
+[[flowers]]
+kind = "rose"
+count = 2
+color = "crimson"
+
+[[flowers]]
+kind = "babys-breath"
+count = 4
