@@ -232,6 +232,7 @@ else
 	if [ -n "$on_path" ]; then
 		printf '\n  all done. Run: posy\n\n'
 	else
+		# shellcheck disable=SC2016 # $PATH is meant to be printed as written
 		printf '\n  almost done: %s is not on your PATH.\n  Add:  export PATH="%s:$PATH"\n  Or run it now with: %s/posy\n\n' \
 			"$INSTALL_DIR" "$INSTALL_DIR" "$INSTALL_DIR"
 	fi
