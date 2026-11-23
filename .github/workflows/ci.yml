@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch makes the older run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -D warnings
+
+jobs:
+  format:
+    name: Format
+    runs-on: namespace-profile-nvmbr-sm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all --check
+
+  lint:
+    name: Clippy
+    runs-on: namespace-profile-nvmbr-md
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets --locked -- -D warnings
+
+  test:
+    name: Test
+    runs-on: namespace-profile-nvmbr-md
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --locked
+
+  # Builds the real program and makes it draw: every preset, in every
+  # style. Catches the kind of break that unit tests can't see.
+  smoke:
+    name: Draw every bouquet
+    runs-on: namespace-profile-nvmbr-md
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --locked
+      - name: Draw
+        run: |
+          set -eu
+          posy=target/release/posy
+          export XDG_CONFIG_HOME="$RUNNER_TEMP/config"
+          "$posy" --version
+          "$posy" list
+          mkdir -p shots
+          for bouquet in classic roses wildflower sunset spring blush midnight; do
+            for style in ascii blocks fine; do
+              out="shots/$bouquet-$style.html"
+              "$posy" -b "$bouquet" --style "$style" --color truecolor snapshot "$out" --size 120x44
+              # A frame with a bouquet in it is never tiny.
+              test "$(wc -c < "$out")" -gt 5000
+            done
+          done
+          "$posy" -b examples/ask.toml --style fine --color truecolor snapshot shots/ask.html --size 150x52
+          "$posy" bench --size 170x58
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bouquets
+          path: shots
+          retention-days: 7
+
+  script:
+    name: Install script
+    runs-on: namespace-profile-nvmbr-sm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check install.sh
+        run: |
+          sh -n install.sh
+          command -v shellcheck >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck; }
+          shellcheck install.sh
