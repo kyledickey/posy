@@ -20,18 +20,31 @@ every frame and painted into your terminal with coloured block characters.
 
 ## Install
 
+On a **Mac or Linux**, paste this into a terminal:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/kyledickey/posy/main/install.sh | sh
 ```
 
-Works on macOS and Linux, Intel and ARM. The script downloads the right
-build, checks it arrived intact, and puts it in `~/.local/bin`.
+On **Windows**, paste this into PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/kyledickey/posy/main/install.ps1 | iex
+```
+
+Either one downloads the right build for your computer, checks it arrived
+intact, and puts it where your terminal can find it (`~/.local/bin`, or
+`%LOCALAPPDATA%\Programs\posy` on Windows). There are builds for Intel
+and ARM on all three, and for 32-bit ARM Linux, like an older Raspberry Pi.
 
 Then:
 
 ```sh
 posy
 ```
+
+On Windows it looks best in Windows Terminal, which is already there on
+Windows 11.
 
 <details>
 <summary>Other ways to get it</summary>
@@ -42,7 +55,8 @@ posy
   [latest release](https://github.com/kyledickey/posy/releases/latest),
   unpack it, and put `posy` somewhere on your `PATH`.
 - **Options for the script:** `POSY_INSTALL_DIR=/some/where` to install
-  elsewhere, `POSY_VERSION=0.1.0` for a particular version.
+  elsewhere, `POSY_VERSION=0.1.0` for a particular version. On Windows,
+  set them first, like `$env:POSY_VERSION = "0.1.0"`.
 
 </details>
 
@@ -157,8 +171,16 @@ terminal can't draw `fine`: press `v`.
 ## Bouquet files
 
 A bouquet is a small text file. `posy show classic` prints one to start
-from; save yours in `~/.config/posy/bouquets/` and it appears in
-`posy list`.
+from; save yours in the `bouquets` folder inside posy's folder and it
+appears in `posy list`.
+
+posy's folder is:
+
+| on      | it is                                  |
+| ------- | -------------------------------------- |
+| Linux   | `~/.config/posy`                       |
+| Mac     | `~/Library/Application Support/posy`   |
+| Windows | `%APPDATA%\posy`                       |
 
 ```toml
 name = "ours"
@@ -195,8 +217,8 @@ no_reply = "that's okay ♥"
 
 ## Settings
 
-`posy init` writes `~/.config/posy/config.toml` with every setting
-explained (it is also in [`examples/config.toml`](examples/config.toml)).
+`posy init` writes `config.toml` in posy's folder with every setting
+explained, and tells you where it put it (it is also in [`examples/config.toml`](examples/config.toml)).
 The ones worth knowing:
 
 - **Who it's for:** `name` and `from`, and a list of `messages` to rotate
@@ -254,8 +276,9 @@ The pictures here are the program's own output, painted cell by cell by
 
 To release: set the version in `Cargo.toml`, commit, then
 `git tag v0.2.0 && git push origin v0.2.0`. The release workflow checks
-the tag matches, builds for Linux and macOS (Intel and ARM each), tries
-the install script against the result, and publishes it.
+the tag matches, builds for Linux, macOS and Windows (Intel and ARM each,
+plus 32-bit ARM Linux), tries both install scripts against the result,
+and publishes it.
 
 ## Thanks
 

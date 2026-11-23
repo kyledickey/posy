@@ -76,7 +76,7 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub date: Option<String>,
 
-    /// Use this config file instead of ~/.config/posy/config.toml
+    /// Use this config file instead of the usual one (`posy init` shows where that is)
     #[arg(long, global = true)]
     pub config: Option<PathBuf>,
 
@@ -93,7 +93,7 @@ pub enum Command {
         /// Bouquet name or path
         bouquet: String,
     },
-    /// Write an example config to ~/.config/posy/config.toml
+    /// Write an example config file, and say where it went
     Init {
         /// Overwrite an existing config
         #[arg(long)]

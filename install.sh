@@ -28,16 +28,19 @@ trap 'rm -rf "$WORK"' EXIT INT TERM
 case "$(uname -s)" in
 Linux) os=linux gum_os=Linux ;;
 Darwin) os=macos gum_os=Darwin ;;
+MINGW* | MSYS* | CYGWIN*) os=windows gum_os= ;;
 *) os=other gum_os= ;;
 esac
 case "$(uname -m)" in
 x86_64 | amd64) arch=x86_64 gum_arch=x86_64 ;;
 arm64 | aarch64) arch=aarch64 gum_arch=arm64 ;;
+armv7* | armv8l) arch=armv7 gum_arch=armv7 ;;
 *) arch=other gum_arch= ;;
 esac
 case "$os-$arch" in
 linux-x86_64) TARGET=x86_64-unknown-linux-musl ;;
 linux-aarch64) TARGET=aarch64-unknown-linux-musl ;;
+linux-armv7) TARGET=armv7-unknown-linux-musleabihf ;;
 macos-x86_64) TARGET=x86_64-apple-darwin ;;
 macos-aarch64) TARGET=aarch64-apple-darwin ;;
 *) TARGET= ;;
@@ -162,6 +165,8 @@ done
 find_gum
 banner
 
+[ "$os" != windows ] || fail "on Windows, install posy from PowerShell instead:
+    irm https://raw.githubusercontent.com/$REPO/main/install.ps1 | iex"
 [ -n "$TARGET" ] || fail "there is no ready-made posy for $(uname -s) $(uname -m) yet.
     With Rust installed you can build it: cargo install --git https://github.com/$REPO"
 step "this computer" "$os $arch"

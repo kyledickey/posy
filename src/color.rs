@@ -274,7 +274,10 @@ impl ColorMode {
         let known = FULL
             .iter()
             .any(|name| term.contains(name) || program.contains(name));
-        if colorterm.contains("truecolor") || colorterm.contains("24bit") || known {
+        // Every Windows console since Windows 10 has full colour, but
+        // doesn't say so in $COLORTERM.
+        let windows = cfg!(windows) && term.is_empty();
+        if colorterm.contains("truecolor") || colorterm.contains("24bit") || known || windows {
             ColorMode::TrueColor
         } else {
             ColorMode::Ansi256

@@ -54,12 +54,25 @@ jobs:
             runner: namespace-profile-nvmbr-lg
           - target: aarch64-unknown-linux-musl
             runner: namespace-profile-nvmbr-lg
-          # Mac programs have to be built on a Mac.
+          - target: armv7-unknown-linux-musleabihf
+            runner: namespace-profile-nvmbr-lg
+          # Mac programs have to be built on a Mac. The Intel one is
+          # cross-built on the same Apple Silicon machine.
           - target: aarch64-apple-darwin
-            runner: macos-latest
+            runner: namespace-profile-nvmbr-mac
           - target: x86_64-apple-darwin
-            runner: macos-latest
+            runner: namespace-profile-nvmbr-mac
+          # Windows ones are built on Windows; the ARM one is cross-built.
+          # These are GitHub's own machines: Namespace has none for Windows
+          # on this plan.
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+          - target: aarch64-pc-windows-msvc
+            runner: windows-latest
     runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
@@ -72,7 +85,7 @@ jobs:
         run: |
           set -eu
           case "${{ matrix.target }}" in
-            *-linux-musl)
+            *-linux-musl*)
               # Rust's own linker can link these without a cross toolchain.
               var="CARGO_TARGET_$(echo "${{ matrix.target }}" | tr 'a-z-' 'A-Z_')_LINKER"
               export "$var=rust-lld"
@@ -80,27 +93,74 @@ jobs:
           esac
           cargo build --release --locked --target "${{ matrix.target }}"
       - name: Try it
-        if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.target == 'aarch64-apple-darwin'
+        if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.target == 'aarch64-apple-darwin' || matrix.target == 'x86_64-pc-windows-msvc'
         run: |
           set -eu
           posy="target/${{ matrix.target }}/release/posy"
+          case "${{ matrix.target }}" in *-windows-*) posy="$posy.exe" ;; esac
           "$posy" --version
           "$posy" -b roses --style fine --color truecolor snapshot "$RUNNER_TEMP/roses.html"
       - name: Package
         run: |
           set -eu
           mkdir -p dist package
-          cp "target/${{ matrix.target }}/release/posy" README.md LICENSE package/
-          tar -czf "dist/posy-${{ matrix.target }}.tar.gz" -C package posy README.md LICENSE
+          case "${{ matrix.target }}" in
+            *-windows-*)
+              # Windows people expect a zip, and Windows' own tar opens it.
+              cp "target/${{ matrix.target }}/release/posy.exe" README.md LICENSE package/
+              (cd package && 7z a -tzip "../dist/posy-${{ matrix.target }}.zip" posy.exe README.md LICENSE)
+              ;;
+            *)
+              cp "target/${{ matrix.target }}/release/posy" README.md LICENSE package/
+              tar -czf "dist/posy-${{ matrix.target }}.tar.gz" -C package posy README.md LICENSE
+              ;;
+          esac
       - uses: actions/upload-artifact@v4
         with:
           name: posy-${{ matrix.target }}
-          path: dist/*.tar.gz
+          path: dist/posy-*
           if-no-files-found: error
+
+  # Runs the real Windows install script, in both PowerShells, against the
+  # files about to be published.
+  windows-install:
+    name: Install on Windows
+    needs: [check, build]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        shell: bash
+        run: cd dist && sha256sum posy-*.tar.gz posy-*.zip > checksums.txt
+      - name: Install with PowerShell 7
+        shell: pwsh
+        run: |
+          $env:POSY_DOWNLOAD_URL = (Resolve-Path dist).Path
+          $env:POSY_INSTALL_DIR = Join-Path $env:RUNNER_TEMP 'pwsh-bin'
+          ./install.ps1
+          if ($LASTEXITCODE) { exit 1 }
+          $v = & (Join-Path $env:POSY_INSTALL_DIR 'posy.exe') --version
+          if ($v -notlike '*${{ needs.check.outputs.version }}*') { throw "installed $v" }
+      - name: Install with Windows PowerShell, the way people will
+        shell: powershell
+        run: |
+          $env:POSY_DOWNLOAD_URL = (Resolve-Path dist).Path
+          $env:POSY_INSTALL_DIR = Join-Path $env:RUNNER_TEMP 'ps-bin'
+          Get-Content -Raw install.ps1 | Invoke-Expression
+          $v = & (Join-Path $env:POSY_INSTALL_DIR 'posy.exe') --version
+          if ($v -notlike '*${{ needs.check.outputs.version }}*') { throw "installed $v" }
+          # Installing again over the top works too.
+          Get-Content -Raw install.ps1 | Invoke-Expression
+          & (Join-Path $env:POSY_INSTALL_DIR 'posy.exe') -b roses --style fine --color truecolor snapshot "$env:RUNNER_TEMP\roses.html"
+          if ($LASTEXITCODE) { exit 1 }
 
   publish:
     name: Publish
-    needs: [check, build]
+    needs: [check, build, windows-install]
     runs-on: namespace-profile-nvmbr-sm
     permissions:
       contents: write
@@ -114,7 +174,7 @@ jobs:
         run: |
           set -eu
           cd dist
-          sha256sum posy-*.tar.gz > checksums.txt
+          sha256sum posy-*.tar.gz posy-*.zip > checksums.txt
           cat checksums.txt
       - name: Install from these files
         run: |
@@ -128,7 +188,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/posy-*.tar.gz dist/checksums.txt \
+          gh release create "$GITHUB_REF_NAME" dist/posy-*.tar.gz dist/posy-*.zip dist/checksums.txt \
             --repo "$GITHUB_REPOSITORY" \
             --title "posy ${{ needs.check.outputs.version }}" \
             --generate-notes

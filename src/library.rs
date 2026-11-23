@@ -1,5 +1,5 @@
 //! Every bouquet you can flip through: today's daily bouquet, the built-in
-//! presets, and bouquets saved in `~/.config/posy/bouquets/`.
+//! presets, and bouquets saved in the `bouquets` folder next to the config.
 
 use std::fs;
 use std::path::{Path, PathBuf};
