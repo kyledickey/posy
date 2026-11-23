@@ -1,81 +1,164 @@
+<div align="center">
+
 # posy
 
-A little 3D bouquet for your terminal. It grows in from bare stems, blooms,
-and slowly spins, with hearts, petals, fireflies, snow or stars around it.
-It can be painted with tiny coloured blocks, or drawn in ascii.
+**A little 3D bouquet for your terminal.**
 
-Inspired by [alishsharma17/Ascii-Flower-Bouquet-](https://github.com/alishsharma17/Ascii-Flower-Bouquet-)
-(@alishsharma on TikTok).
+It grows from bare stems, blooms, and slowly turns.<br>
+Pick the flowers, write a message, and give it to someone.
 
-## Getting it
+<img src="docs/posy.gif" alt="A bouquet of red roses growing in and turning, in a terminal" width="624">
+
+[![CI](https://github.com/kyledickey/posy/actions/workflows/ci.yml/badge.svg)](https://github.com/kyledickey/posy/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/kyledickey/posy?color=f67aac)](https://github.com/kyledickey/posy/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-f67aac)](LICENSE)
+
+</div>
+
+Everything you see is text. Each flower is a real 3D model, drawn fresh
+every frame and painted into your terminal with coloured block characters.
+
+## Install
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/kyledickey/posy/main/install.sh | sh
 ```
 
-That downloads the ready-made program for your computer (Mac or Linux),
-checks it arrived intact, and puts it in `~/.local/bin`. Later,
-`posy update` fetches the newest version, and `posy update --check` only
-looks. posy also looks once a day by itself and mentions a new version
-when you close it; `update_check = false` in the config turns that off.
+Works on macOS and Linux, Intel and ARM. The script downloads the right
+build, checks it arrived intact, and puts it in `~/.local/bin`.
 
-Or build it yourself, with Rust installed: `cargo install --path .`
-
-## Running it
+Then:
 
 ```sh
-posy                 # today's bouquet (new every day)
-posy -b roses        # a preset
-posy -b random -w vase -e snow,stars --name Sam --from me
-posy list            # every bouquet you can show
-posy init            # write ~/.config/posy/config.toml
+posy
 ```
 
-## Using it
+<details>
+<summary>Other ways to get it</summary>
 
-Everything can be done with the mouse: drag to turn the bouquet, scroll to
-zoom, and click the words along the bottom. `m` (or clicking "make your
-own") opens a menu for changing the flowers, colours, wrap and message
-while you watch; "add a flower" there lets you pick which one.
+- **From source**, with [Rust](https://rustup.rs) installed:
+  `cargo install --git https://github.com/kyledickey/posy`
+- **By hand:** grab the archive for your computer from the
+  [latest release](https://github.com/kyledickey/posy/releases/latest),
+  unpack it, and put `posy` somewhere on your `PATH`.
+- **Options for the script:** `POSY_INSTALL_DIR=/some/where` to install
+  elsewhere, `POSY_VERSION=0.1.0` for a particular version.
+
+</details>
+
+## Bouquets
+
+There is a new bouquet every day, seven built in, and as many random ones
+as you like.
+
+<img src="docs/bouquets.png" alt="Six bouquets: classic, wildflower, sunset, spring, blush and midnight" width="100%">
+
+```sh
+posy                 # today's bouquet
+posy -b roses        # a built-in one: classic, roses, wildflower,
+                     #   sunset, spring, blush, midnight
+posy -b random       # a surprise
+posy list            # everything you can show, including your own
+```
+
+Add a name and it shows up wherever a message says `{name}`:
+
+```sh
+posy -b roses --name Sam --from me -m "for you, {name} ♥"
+```
+
+## Make your own
+
+Press `m`, or click **make your own**. Everything in the menu works by
+clicking or with the arrow keys, and the bouquet changes as you go.
+
+<img src="docs/menu.png" alt="The menu open on a list of flowers to pick from, with the bouquet beside it" width="100%">
+
+- Ten flowers: rose, tulip, daisy, sunflower, lily, cosmos, carnation,
+  peony, lavender and baby's breath, each in any colour.
+- Five things to hold them: a paper cone, a glass vase, a jam jar, a
+  basket, or just a ribbon.
+- Hearts, petals, fireflies, snow, stars and sparkles floating around.
+- **save this bouquet** keeps it, and `posy -b its-name` brings it back.
+
+## Ask a question
+
+The message can be big, coloured and moving, and it can be a question with
+two answers to click.
+
+<img src="docs/ask.png" alt="A bouquet of roses over the words WILL YOU BE MY GIRLFRIEND? with yes and no buttons" width="100%">
+
+Set it up in the menu under **words** and **a question**, or write it down:
+
+```toml
+# ask.toml
+name = "ask"
+message = "will you be my girlfriend?"
+message_big = true
+signature = "— me"
+ask = true
+yes_reply = "best day ever ♥"
+
+[[flowers]]
+kind = "rose"
+count = 9
+```
+
+```sh
+posy -b ask.toml --clean
+```
+
+Saying yes sets off a burst of hearts. `--clean` hides the buttons along
+the bottom, so there is nothing on screen but flowers and words.
+
+## Controls
+
+Drag to turn the bouquet, scroll to zoom, and click the words along the
+bottom. Or use the keyboard:
 
 | key                  | does                                                    |
 | -------------------- | ------------------------------------------------------- |
-| arrows / mouse drag  | turn and tilt                                           |
-| `+` `-` `0` / scroll | zoom, reset view                                        |
-| `space`              | pause the spin                                          |
-| `n` / `p`            | next / previous bouquet                                 |
-| `s`                  | surprise me: a brand-new random bouquet                 |
+| arrows               | turn and tilt                                           |
+| `+` `-` `0`          | closer, further, back to normal                         |
+| `space`              | stop or start the turning                               |
+| `[` `]`              | turn slower / faster                                    |
+| `n` `p`              | next / previous bouquet                                 |
+| `s`                  | surprise me                                             |
 | `m`                  | make your own                                           |
 | `r`                  | rearrange the flowers                                   |
-| `g`                  | grow it again                                           |
-| `1`–`6`              | toggle hearts, petals, fireflies, snow, stars, sparkles |
+| `g`                  | watch it grow again                                     |
+| `1`–`6`              | hearts, petals, fireflies, snow, stars, sparkles        |
 | `v`                  | change how it is drawn                                  |
 | `h`                  | hide or show the buttons along the bottom               |
-| `[` `]`              | spin slower / faster                                    |
-| `P`                  | save this exact bouquet to `~/.config/posy/bouquets/`   |
-| `x`                  | save a picture: `.html` (to send) and `.ans` (to `cat`) |
+| `x`                  | save a picture (an `.html` page to send, and an `.ans`) |
 | `/`                  | whisper a word…                                         |
-| `?` / `q`            | help / quit                                             |
+| `?`                  | help                                                    |
+| `q`                  | leave                                                   |
 
 There may also be a secret or two.
 
 ## How it is drawn
 
-`--style` (or `style` in the config, or `v` while it runs) picks one of:
+<img src="docs/styles.png" alt="The same bouquet drawn three ways: fine blocks, blocks, and ascii" width="100%">
 
-- `fine`: each character cell is painted as 2x4 coloured squares. The
-  sharpest, but it needs a terminal that draws the newest block characters
-  (Ghostty and Kitty do).
-- `blocks`: 2x2 squares per cell. Works in any terminal with full colour.
-- `ascii`: letters and symbols, coloured.
+Left to right: `fine`, `blocks` and `ascii`. posy picks the best one your
+terminal can show; `v` switches while it runs, and `--style` or the config
+file chooses for good.
 
-Left alone, posy picks the best one it thinks your terminal can show. If
-you see little boxes with numbers in them instead of flowers, press `v`.
+| style    | what it is                                    | needs                                              |
+| -------- | --------------------------------------------- | -------------------------------------------------- |
+| `fine`   | each character cell painted as 2×4 squares    | a terminal that draws the newest block characters, like Ghostty or Kitty |
+| `blocks` | 2×2 squares per cell                          | any terminal with full colour                      |
+| `ascii`  | letters and symbols                           | anything                                           |
+
+If you see little boxes with numbers in them instead of flowers, your
+terminal can't draw `fine`: press `v`.
 
 ## Bouquet files
 
-A bouquet is a small TOML file. Run `posy show classic` to see one, then save
-your own in `~/.config/posy/bouquets/` (or use "save this bouquet" in the menu).
+A bouquet is a small text file. `posy show classic` prints one to start
+from; save yours in `~/.config/posy/bouquets/` and it appears in
+`posy list`.
 
 ```toml
 name = "ours"
@@ -87,88 +170,98 @@ effects = ["hearts", "sparkles"]
 
 [[flowers]]
 kind = "rose"               # rose, tulip, daisy, sunflower, lily, cosmos,
-count = 6                   # carnation, peony, lavender, babys-breath
-color = "red"               # a name (see src/color.rs) or "#rrggbb"
+count = 6                   #   carnation, peony, lavender, babys-breath
+color = "red"               # a name like "blush", or "#rrggbb"
 
 [[flowers]]
 kind = "babys-breath"
 count = 3
 ```
 
-### The words
-
-The message under the bouquet can be dressed up, in the menu under "words"
-or in the file:
+The words have their own settings:
 
 ```toml
-message = "will you be my girlfriend?"
 message_big = true          # big pixel letters
 message_color = "pink"
 message_effect = "shimmer"  # shimmer, glow, rainbow, plain
 signature = "— me"
-```
 
-It can also be a question with two answers to click (or `y` / `n`):
-
-```toml
-ask = true
+ask = true                  # make it a question
 yes = "yes ♥"               # the two answers...
 no = "no"
 yes_reply = "best day ever ♥"   # ...and what the message turns into
 no_reply = "that's okay ♥"
 ```
 
-Saying yes sets off a burst of hearts. For a clean screen with nothing but
-the bouquet and the words, hide the buttons along the bottom with `h` (or
-start with `--clean`).
+## Settings
 
-## Config
+`posy init` writes `~/.config/posy/config.toml` with every setting
+explained (it is also in [`examples/config.toml`](examples/config.toml)).
+The ones worth knowing:
 
-`posy init` writes a commented example (see `examples/config.toml`). It
-covers her name, rotating messages, special dates (anniversaries,
-birthdays, with `{years}` counting up), secret words, colors and speed.
-Test a special date with `--date 02-14`.
+- **Who it's for:** `name` and `from`, and a list of `messages` to rotate
+  through.
+- **Special days:** a message, bouquet and effects for a date, such as an
+  anniversary, with `{years}` counting up. Try one with `--date 02-14`.
+- **Secret words:** press `/`, type one, and something happens.
+- **Looks:** `style`, `spin_speed`, `fps`, and `buttons = false` to keep
+  the bottom row hidden.
+
+## Updating
+
+```sh
+posy update          # get the newest version
+posy update --check  # only look
+```
+
+posy also looks once a day by itself and mentions a new version after you
+close it, never while the bouquet is on screen. `update_check = false` in
+the config turns that off.
 
 ## How it works
 
-- `bouquet.rs`: the data, i.e. what you write in a TOML file.
-- `flowers.rs`: every flower is a real 3D model built petal by petal. A
-  petal is a curved sheet described by a few numbers (length, width, how it
-  tilts from base to tip, how far it wraps around the middle), and each kind
-  of flower is a recipe for arranging them. Blooming is every petal leaning
-  out from upright.
-- `scene/`: arranges the flowers on a dome, grows stems and leaves to them,
-  and builds the wrap. Every point has a "born" time, which is how the
-  bouquet grows in.
-- `render.rs` and `raster.rs`: light the triangles and fill them into a
-  picture 4x8 times finer than the terminal (spread over your CPU cores),
-  then turn each cell of that picture into a character.
-  - Blocks: the cell is cut into squares, the squares are sorted into two
-    colours, and the cell gets the block character with that pattern.
-    `octants.rs` lists those characters (`tools/octants.py` regenerates it).
-  - Ascii: filled cells pick from a short brightness ramp; cells on an
-    outline pick the character whose *shape* fits best (so an edge running
-    along the bottom of a cell becomes `_`, a diagonal becomes `/`).
-    `glyphs.rs` holds the measured shape of every character
-    (`tools/glyphs.py` regenerates it).
-- `menu.rs` and `hud.rs`: the "make your own" menu, and the message, help
-  and buttons drawn over the bouquet.
-- `app.rs`: the loop. Read input, update, draw, then send the terminal only
-  the cells that changed.
+- **Flowers** ([`src/flowers.rs`](src/flowers.rs)) are built petal by
+  petal. A petal is a curved sheet described by a few numbers: how long,
+  how wide, how far it leans from base to tip, how much it wraps around
+  the middle. Each kind of flower is a recipe for arranging them, and
+  blooming is every petal leaning out from upright.
+- **The arrangement** ([`src/scene/`](src/scene/)) spreads the heads over
+  a dome and nudges neighbours apart until none pushes through another,
+  then grows stems and leaves to them and builds the wrap.
+- **Drawing** ([`src/render.rs`](src/render.rs),
+  [`src/raster.rs`](src/raster.rs)) lights the triangles and fills them
+  into a picture 4×8 times finer than the terminal, spread across your
+  CPU cores. Each cell of that picture is then sorted into two colours
+  and given the block character with that pattern. In ascii, a cell on an
+  outline gets the character whose *shape* fits best, so an edge along
+  the bottom becomes `_` and a diagonal becomes `/`.
+- **The loop** ([`src/app.rs`](src/app.rs)) only sends the terminal the
+  cells that changed, which is what keeps it smooth, even over ssh.
 
-`posy garden out.html` renders every kind of flower from three angles, which
-is handy when tuning a flower. Setting `POSY_DUMP=out.ppm` also saves the
-picture before it becomes characters.
+It is about 8,500 lines of Rust with no graphics libraries: the 3D is
+done by hand.
 
-## Releasing
-
-Set the new version in `Cargo.toml`, commit, then tag it and push the tag:
+## Working on it
 
 ```sh
-git tag v0.2.0 && git push origin v0.2.0
+cargo run --release              # run it
+cargo test                       # test it
+python3 tools/readme_media.py    # remake the pictures on this page
 ```
 
-The release workflow checks the tag matches `Cargo.toml`, builds for Linux
-and Mac (Intel and ARM each), tries the install script against the result,
-and publishes the files with their checksums. Running the workflow by hand
-does everything except publish.
+The pictures here are the program's own output, painted cell by cell by
+[`tools/paint.py`](tools/paint.py).
+
+To release: set the version in `Cargo.toml`, commit, then
+`git tag v0.2.0 && git push origin v0.2.0`. The release workflow checks
+the tag matches, builds for Linux and macOS (Intel and ARM each), tries
+the install script against the result, and publishes it.
+
+## Thanks
+
+Inspired by [alishsharma17/Ascii-Flower-Bouquet-](https://github.com/alishsharma17/Ascii-Flower-Bouquet-)
+(@alishsharma on TikTok).
+
+## License
+
+[MIT](LICENSE)

@@ -90,8 +90,8 @@ jobs:
         run: |
           set -eu
           mkdir -p dist package
-          cp "target/${{ matrix.target }}/release/posy" README.md package/
-          tar -czf "dist/posy-${{ matrix.target }}.tar.gz" -C package posy README.md
+          cp "target/${{ matrix.target }}/release/posy" README.md LICENSE package/
+          tar -czf "dist/posy-${{ matrix.target }}.tar.gz" -C package posy README.md LICENSE
       - uses: actions/upload-artifact@v4
         with:
           name: posy-${{ matrix.target }}

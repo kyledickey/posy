@@ -47,7 +47,9 @@ fn main() -> Result<()> {
             size,
             at,
             keys,
-        }) => app::snapshot(&cli, config, out, size, *at, keys),
+            frames,
+            every,
+        }) => app::snapshot(&cli, config, out, size, *at, keys, (*frames, *every)),
         Some(Command::Update { check }) => update::run(*check),
         Some(Command::Bench { size }) => app::bench(&cli, config, size),
         Some(Command::Garden { out, size, open }) => {

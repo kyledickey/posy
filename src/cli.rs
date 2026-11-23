@@ -112,6 +112,12 @@ pub enum Command {
         /// Keys to press first, comma separated (down,enter,x ...)
         #[arg(long, value_delimiter = ',', hide = true)]
         keys: Vec<String>,
+        /// Save this many frames in a row (out-000.ans, out-001.ans ...)
+        #[arg(long, default_value_t = 1, hide = true)]
+        frames: usize,
+        /// Seconds between those frames
+        #[arg(long, default_value_t = 0.1, hide = true)]
+        every: f32,
     },
     /// Get the newest posy (or just see whether there is one)
     Update {

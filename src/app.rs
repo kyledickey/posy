@@ -864,6 +864,7 @@ pub fn snapshot(
     size: &str,
     at: f32,
     keys: &[String],
+    (frames, every): (usize, f32),
 ) -> Result<()> {
     let (w, h) = parse_size(size)?;
     let mut app = App::new(cli, config)?;
@@ -888,9 +889,27 @@ pub fn snapshot(
         app.update(step);
         t += step;
     }
-    app.render(w, h);
-    export::write(out, &app.canvas, app.background.unwrap_or(DEFAULT_BG))?;
-    println!("saved {}", out.display());
+    let background = app.background.unwrap_or(DEFAULT_BG);
+    if frames <= 1 {
+        app.render(w, h);
+        export::write(out, &app.canvas, background)?;
+        println!("saved {}", out.display());
+        return Ok(());
+    }
+    // A run of frames, for making an animation: out-000.ans, out-001.ans ...
+    let stem = out.file_stem().and_then(|s| s.to_str()).unwrap_or("frame");
+    let ext = out.extension().and_then(|s| s.to_str()).unwrap_or("ans");
+    for i in 0..frames {
+        app.render(w, h);
+        let path = out.with_file_name(format!("{stem}-{i:03}.{ext}"));
+        export::write(&path, &app.canvas, background)?;
+        let mut waited = 0.0;
+        while waited < every {
+            app.update(step);
+            waited += step;
+        }
+    }
+    println!("saved {frames} frames next to {}", out.display());
     Ok(())
 }
 
